@@ -1,0 +1,30 @@
+# Python 관련 캐시
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+*.pyc
+# 가상환경 및 의존성 디렉토리
+.venv/
+venv/
+env/
+node_modules/
+*.log
+nohup.out
+# IDE/OS 관련
+.DS_Store
+.vscode/
+.idea/
+
+# 실행환경 설정
+.env
+
+# 데이터/빌드 산출물
+chroma_db/
+summary_cache.db
+*.sqlite
+*.log
+
+# 반드시 포함할 문서
+!summary_api_full_guide.md
+!summary_api_full_guide.pdf
