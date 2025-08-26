@@ -1,4 +1,22 @@
+
 // 📁 src/app/admin/layout.tsx
+// 관리자 페이지의 공통 레이아웃 컴포넌트.
+//
+// 설계 포인트
+// ===========
+// 1) 반응형 사이드바(Drawer) 구현: 모바일에서는 오버레이, 데스크탑에서는 고정/숨김 토글.
+// 2) `usePathname` 훅을 사용해 현재 경로를 감지.
+// 3) 로그인/회원가입 페이지(`/admin/login`, `/admin/signup`)에서는 사이드바를 숨기는 조건부 렌더링.
+// 4) styled-components를 활용하여 모바일 오버레이, 사이드바 패널, 메인 콘텐츠 영역 등을 스타일링.
+// 5) 사이드바의 열림/닫힘 상태(`mobileOpen`, `pinned`)를 `useState`로 관리.
+// 6) 데스크탑용 사이드바 토글 버튼(`DesktopSidebarHandle`)을 별도 컴포넌트로 구현하여 UI/UX 개선.
+//
+// 컴포넌트 구성
+// -------------
+// - AdminNav: 실제 네비게이션 링크를 담고 있는 컴포넌트.
+// - ThemeToggle: 다크/라이트 모드 토글 컴포넌트.
+// - UserNav: 사용자 프로필 및 로그아웃 드롭다운 컴포넌트.
+
 'use client';
 
 import { useState } from 'react';
@@ -10,11 +28,13 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserNav } from '@/components/UserNav';
 import styled from 'styled-components';
 
-/* ------------------------------------------------------------------ */
-/* ───────── styled elements ────────── */
+// ───────────────────────────── 스타일 컴포넌트 ─────────────────────────────
 
-const DRAWER_W = 240; // 15rem (줄임)
+/** 사이드바 너비 변수 (240px) */
 
+const DRAWER_W = 240;
+
+/** 전체 레이아웃을 감싸는 최상위 컨테이너 */
 const LayoutContainer = styled.div`
   display: flex;
   height: 100vh;
@@ -22,6 +42,7 @@ const LayoutContainer = styled.div`
   background-color: hsl(var(--muted) / 0.4);
 `;
 
+/** 모바일 화면에서 사이드바가 열렸을 때 배경을 어둡게 처리하는 오버레이 */
 const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
@@ -37,6 +58,7 @@ const MobileOverlay = styled.div<{ $isOpen: boolean }>`
   }
 `;
 
+/** 사이드바 패널. 모바일/데스크탑 상태에 따라 transform으로 위치 제어 */
 const SidebarPanel = styled.aside<{ $mobileOpen: boolean; $desktopOpen: boolean }>`
   position: fixed;
   left: 0;
@@ -61,6 +83,7 @@ const SidebarPanel = styled.aside<{ $mobileOpen: boolean; $desktopOpen: boolean 
   }
 `;
 
+/** 사이드바 내부에서 스크롤이 필요한 콘텐츠 영역 */
 const SidebarContent = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -75,6 +98,7 @@ const SidebarContent = styled.div`
   }
 `;
 
+/** 페이지의 메인 콘텐츠 영역. 데스크탑 사이드바 상태에 따라 padding-left 조절 */
 const MainContent = styled.div<{ $desktopOpen: boolean }>`
   position: relative;
   flex: 1;
@@ -87,6 +111,7 @@ const MainContent = styled.div<{ $desktopOpen: boolean }>`
   }
 `;
 
+/** 데스크탑에서 사이드바를 열고 닫는 핸들 버튼 */
 const DesktopSidebarHandle = styled.button<{ $isOpen: boolean }>`
   display: none; /* hidden */
   @media (min-width: 1024px) {
@@ -114,6 +139,7 @@ const DesktopSidebarHandle = styled.button<{ $isOpen: boolean }>`
   }
 `;
 
+/** 모바일에서 사이드바를 열고 닫기 위한 아이콘 버튼 */
 const MobileIconButton = styled.button`
   display: flex;
   align-items: center;
@@ -135,18 +161,27 @@ const MobileIconButton = styled.button`
   }
 `;
 
-/* ------------------------------------------------------------------ */
-/* ───────── Component ────────── */
+// ───────────────────────────── 레이아웃 컴포넌트 ─────────────────────────────
+/**
+ * AdminLayout
+ * 관리자 페이지의 전체적인 구조(사이드바, 헤더, 메인 콘텐츠)를 정의하는 레이아웃.
+ *
+ * @param {{ children: React.ReactNode }} props - 페이지 콘텐츠
+ * @returns {JSX.Element} 관리자 페이지 레이아웃
+ */
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pinned, setPinned] = useState(true);
   const pathname = usePathname();
 
-  // 로그인/회원가입 페이지인지 확인
+  // ───────────────────────────── 조건부 렌더링 ─────────────────────────────
+
+  // 현재 경로가 로그인 또는 회원가입 페이지인지 확인
   const isAuthPage = pathname === '/admin/login' || pathname === '/admin/signup';
 
-  // 인증 페이지인 경우 사이드바 없이 렌더링
+  
+  // 인증 페이지인 경우, 사이드바 없이 메인 콘텐츠만 렌더링
   if (isAuthPage) {
     return (
       <LayoutContainer>
@@ -164,7 +199,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // 일반 관리자 페이지 렌더링
+  // ───────────────────────────── 기본 렌더링 로직 ─────────────────────────────
+
+  // 일반 관리자 페이지 (사이드바 포함)
   return (
     <LayoutContainer>
       <MobileOverlay $isOpen={mobileOpen} onClick={() => setMobileOpen(false)} />

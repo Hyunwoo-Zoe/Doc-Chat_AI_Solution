@@ -1,4 +1,21 @@
+
 // 📁 src/app/admin/test-summarize/page.tsx
+// AI 요약 기능 테스트 페이지.
+//
+// 설계 포인트
+// ===========
+// 1) PDF 문서의 URL과 사용자 질문(Query)을 입력받아 AI 요약 API를 호출.
+// 2) File ID, PDF URL, Query, 언어 설정을 위한 폼 인터페이스 제공.
+// 3) styled-components를 활용해 입력 폼과 결과 표시 영역을 스타일링.
+// 4) Radix UI 기반의 커스텀 Select 컴포넌트(@/components/ui/select)를 사용.
+// 5) API 요청 중에는 로딩 상태(busy)를 true로 설정하여 버튼을 비활성화하고 로딩 UI를 표시.
+// 6) API 응답 결과(성공/실패)를 별도의 카드에 표시하고, sonner를 통해 토스트 피드백 제공.
+//
+// 주의
+// ----
+// - onSubmit 핸들러에서 query가 비어있을 경우, 기본값('xxx가 뭐야?')을 사용함.
+//   이는 백엔드 API가 query를 필수 인자로 요구하기 때문.
+
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -11,9 +28,9 @@ import {
 } from '@/components/ui/select';
 import { FileText, Globe, Sparkles, Loader2, ClipboardList } from 'lucide-react';
 
-/* ------------------------------------------------------------------ */
-/* ───────── styled elements ────────── */
+// ───────────────────────────── 스타일 컴포넌트 ─────────────────────────────
 
+/** 페이지 전체를 감싸는 최상위 래퍼 */
 const Wrapper = styled.main`
   min-height: 100vh;
   display: flex;
@@ -22,6 +39,7 @@ const Wrapper = styled.main`
   background: radial-gradient(ellipse at top, hsl(var(--primary) / 0.05), transparent 50%);
 `;
 
+/** 페이지 콘텐츠를 담는 중앙 패널 */
 const Panel = styled.section`
   width: 100%;
   max-width: 72rem;
@@ -30,6 +48,7 @@ const Panel = styled.section`
   gap: 2rem;
 `;
 
+/** 페이지 상단의 제목과 설명을 담는 헤더 */
 const PageHead = styled.header`
   text-align: center;
   margin-bottom: 1rem;
@@ -53,6 +72,7 @@ const PageHead = styled.header`
   }
 `;
 
+/** 입력 폼과 결과 카드를 감싸는 메인 카드 */
 const MainCard = styled.div`
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -61,6 +81,7 @@ const MainCard = styled.div`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;
 
+/** 카드의 헤더 영역 (예: '문서 정보 입력', '요약 결과') */
 const CardHeader = styled.div`
   padding: 1.5rem 2rem;
   border-bottom: 1px solid hsl(var(--border));
@@ -76,16 +97,19 @@ const CardHeader = styled.div`
   }
 `;
 
+/** 카드의 콘텐츠 영역 */
 const CardContent = styled.div`
   padding: 2rem;
 `;
 
+/** 입력 요소들을 감싸는 form 태그 */
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 `;
 
+/** File ID와 PDF URL 입력을 위한 2단 그리드 레이아웃 */
 const InputGrid = styled.div`
   display: grid;
   gap: 1.5rem;
@@ -95,6 +119,7 @@ const InputGrid = styled.div`
   }
 `;
 
+/** Label과 Input/Textarea를 그룹화하는 단위 */
 const Field = styled.div`
   display: flex;
   flex-direction: column;
@@ -110,6 +135,7 @@ const Field = styled.div`
   }
 `;
 
+/** 한 줄 텍스트 입력을 위한 input 요소 */
 const Input = styled.input`
   height: 3rem;
   padding: 0 1rem;
@@ -131,6 +157,7 @@ const Input = styled.input`
   }
 `;
 
+/** 여러 줄 텍스트 입력을 위한 textarea 요소 */
 const Textarea = styled.textarea`
   min-height: 10rem;
   padding: 1rem;
@@ -155,6 +182,7 @@ const Textarea = styled.textarea`
   }
 `;
 
+/** 폼의 하단 영역 (언어 선택, 제출 버튼) */
 const FormFooter = styled.div`
   display: flex;
   gap: 1rem;
@@ -169,6 +197,7 @@ const FormFooter = styled.div`
   }
 `;
 
+/** 언어 선택 Select 컴포넌트를 감싸는 래퍼 */
 const LanguageSelect = styled.div`
   flex: 1;
   max-width: 200px;
@@ -178,6 +207,7 @@ const LanguageSelect = styled.div`
   }
 `;
 
+/** Radix Select의 Trigger를 커스텀 스타일링한 컴포넌트 */
 const StyledSelectTrigger = styled(SelectTrigger)`
   border: 1px solid hsl(var(--border));
   height: 3rem;
@@ -193,6 +223,7 @@ const StyledSelectTrigger = styled(SelectTrigger)`
   }
 `;
 
+/** 폼 제출 버튼 */
 const SubmitButton = styled.button`
   height: 3rem;
   padding: 0 2rem;
@@ -224,10 +255,12 @@ const SubmitButton = styled.button`
   }
 `;
 
+/** 요약 결과 표시를 위한 섹션 */
 const ResultSection = styled.div`
   margin-top: 2rem;
 `;
 
+/** 요약 결과를 담는 카드 UI */
 const ResultCard = styled.div`
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -241,6 +274,7 @@ const ResultCard = styled.div`
   }
 `;
 
+/** 요약 결과 텍스트, 로딩 UI, 플레이스홀더를 표시하는 콘텐츠 영역 */
 const ResultContent = styled.div`
   min-height: 20rem;
   padding: 2rem;
@@ -291,6 +325,7 @@ const ResultContent = styled.div`
   }
 `;
 
+/** API 에러 메시지를 표시하는 컴포넌트 */
 const ErrorMessage = styled.div`
   margin-top: 1rem;
   padding: 1rem;
@@ -304,12 +339,19 @@ const ErrorMessage = styled.div`
   gap: 0.5rem;
 `;
 
-// 언어 타입
+// ───────────────────────────── 타입 정의 ─────────────────────────────
+/** 지원하는 언어 코드 타입 */
 type Language = 'KO' | 'EN' | 'JP' | 'CN';
 
-/* ------------------------------------------------------------------ */
-
+// ───────────────────────────── 페이지 컴포넌트 ─────────────────────────────
+/**
+ * TestSummaryPage
+ * AI 요약 API를 테스트하기 위한 관리자 페이지 컴포넌트.
+ *
+ * @returns {JSX.Element} 요약 요청 폼 및 결과 표시 UI.
+ */
 export default function TestSummaryPage() {
+  // ───────────────────────────── 상태 관리 ─────────────────────────────
   const [fileId, setFileId] = useState('paper_2023_01');
   const [pdfUrl, setPdfUrl] = useState('https://arxiv.org/pdf/2305.12489.pdf');
   const [query, setQuery] = useState('');
@@ -318,6 +360,11 @@ export default function TestSummaryPage() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
+  // ───────────────────────────── 이벤트 핸들러 ─────────────────────────────
+  /**
+   * 폼 제출 시 요약 API를 호출하는 핸들러.
+   * @param {FormEvent} e - 폼 제출 이벤트 객체
+   */
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setResult(''); setError('');
@@ -342,6 +389,7 @@ export default function TestSummaryPage() {
     } finally { setBusy(false); }
   };
 
+  // ───────────────────────────── 렌더링 로직 ─────────────────────────────
   return (
     <Wrapper>
       <Panel>

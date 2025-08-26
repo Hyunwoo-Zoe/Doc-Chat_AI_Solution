@@ -1,35 +1,43 @@
+
 # ───────── FastAPI 기본 서버 ─────────
+# 목적: 관리자 API 실행에 필요한 웹 서버/기본 의존성
 fastapi
 uvicorn
-requests
-python-dotenv
+requests            # 외부 API 호출 (내부 연동, 상태 점검 등)
+python-dotenv       # .env 파일 기반 환경 변수 로딩
 
 # ───────── PDF 및 문서 처리 ─────────
-PyMuPDF>=1.18.0
-Pillow>=9.0.0
-pytesseract>=0.3.10
+# 목적: PDF 요약 처리 시 텍스트 추출/이미지 OCR 지원
+PyMuPDF>=1.18.0     # PDF 페이지 렌더링 및 텍스트 추출
+Pillow>=9.0.0       # 이미지 처리
+pytesseract>=0.3.10 # OCR (PDF 스캔본 → 텍스트 변환)
 
 # ───────── LangChain 최신 구조 (0.2+) ─────────
+# 목적: LangChain 프레임워크 핵심 모듈 (0.2.x 이상 구조 반영)
 langchain>=0.2.16
 langchain-openai>=0.1.0
 langchain-chroma>=0.1.2
 langchain-community>=0.0.13
 
 # ───────── LangGraph 요약 에이전트 구성 ─────────
+# 목적: LangGraph 워크플로우 기반 PDF 요약·QA 구성
 langgraph>=0.0.40          
 langchain-core>=0.1.50     
 
 # ───────── 벡터 임베딩 및 벡터 DB ─────────
+# 목적: 문서 임베딩 생성 및 Chroma VectorDB 저장
 sentence-transformers
 chromadb>=0.5.0
 
 # ───────── 기타 ─────────
+# 목적: 데이터 검증, 로깅/진행률, 외부 LLM 호출, Redis 캐시
 pydantic
 tqdm
 openai
 redis>=5.0.0
 
-httpx[http2]  # httpx 비동기 클라이언트
+httpx[http2]  # 목적: httpx 비동기 클라이언트 (HTTP/2 지원)
 
 # ───────── Tavily Search API ─────────
+# 목적: 외부 검색 API 연동 (보조 질의 응답 기능)
 tavily-python

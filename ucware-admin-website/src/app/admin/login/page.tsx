@@ -1,4 +1,19 @@
-// 📁 src/app/admin/login/page.tsx (styled-components 최종본)
+
+// 📁 src/app/admin/login/page.tsx
+// 관리자 UI - 로그인 페이지
+//
+// 설계 포인트
+// ===========
+// 1) styled-components 기반의 로그인 폼 UI.
+// 2) 이메일/비밀번호 입력 후 /api/auth/login 호출.
+// 3) 성공 시 localStorage에 flag 저장 후 /admin으로 이동.
+// 4) 실패 시 에러 메시지 출력 + toast 알림.
+//
+// 주의
+// ----
+// - JWT/세션 인증은 추후 서버팀과 연동 필요.
+// - 현재는 단순 localStorage 기반 로그인 플로우.
+
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -8,7 +23,9 @@ import styled from 'styled-components';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 
-// --- Styled Components ---
+
+// ───────── styled-components ─────────
+// 페이지 Wrapper (배경 효과 포함)
 
 const PageWrapper = styled.main`
   position: relative;
@@ -37,6 +54,7 @@ const PageWrapper = styled.main`
   }
 `;
 
+// 로그인 카드 컨테이너
 const LoginCard = styled.div`
   position: relative;
   width: 100%;
@@ -48,6 +66,7 @@ const LoginCard = styled.div`
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 `;
 
+// 헤더 영역 (타이틀, 설명)
 const Header = styled.div`
   text-align: center;
   padding: 1.5rem;
@@ -65,6 +84,7 @@ const Description = styled.p`
   margin-top: 0.25rem;
 `;
 
+// 입력폼 콘텐츠 영역
 const Content = styled.div`
   padding: 0 1.5rem;
   display: flex;
@@ -89,6 +109,7 @@ const Label = styled.label`
   font-weight: 500;
 `;
 
+// 비밀번호 찾기 링크
 const ForgotPasswordLink = styled(Link)`
   font-size: 0.875rem;
   color: hsl(var(--primary));
@@ -98,6 +119,7 @@ const ForgotPasswordLink = styled(Link)`
   }
 `;
 
+// 인풋 + 아이콘 래퍼
 const InputWrapper = styled.div`
   position: relative;
   .icon {
@@ -126,6 +148,7 @@ const Input = styled.input`
   }
 `;
 
+// Footer (버튼 + Divider + SubText)
 const Footer = styled.div`
   padding: 1.5rem;
   padding-top: 1rem;
@@ -207,15 +230,34 @@ const SubText = styled.p`
   }
 `;
 
+/* ------------------------------------------------------------------ */
+/* ───────── Component ───────── */
+/**
+ * AdminLoginPage
+ *
+ * State:
+ *   form    : { email, password }
+ *   error   : 에러 메시지
+ *   loading : 요청 진행 상태
+ *
+ * Handlers:
+ *   handleChange : 인풋 변경 핸들러
+ *   handleSubmit : 로그인 요청 (fetch → /api/auth/login)
+ *                  성공 시 localStorage 저장 후 /admin 이동
+ *                  실패 시 toast 에러 표시
+ */
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // 인풋 변경 핸들러
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  // 로그인 요청 핸들러
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(''); 
@@ -243,6 +285,7 @@ export default function AdminLoginPage() {
     }
   };
 
+  // ───────── UI 렌더링 ─────────
   return (
     <PageWrapper>
       <LoginCard>

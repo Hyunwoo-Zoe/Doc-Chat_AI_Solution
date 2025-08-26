@@ -1,135 +1,124 @@
+
 # INSTALL.md
 
-## 🛠️ 설치 가이드: ucware-llm-api-v1
+🛠️ 설치 가이드: UCWARE Admin API
 
-이 문서는 `ucware-llm-api-v1` 프로젝트를 설치하고 실행하기 위한 전체 환경 설정 방법을 안내합니다.
+이 문서는 UCWARE Admin API 프로젝트를 설치하고 실행하기 위한 전체 환경 설정 방법을 안내합니다.
 
----
+📌 1. 시스템 요구 사항
 
-## 📌 1. 시스템 요구 사항
+Ubuntu 20.04+ 또는 호환 리눅스 배포판
 
-- Ubuntu 20.04+ 또는 호환 리눅스 배포판
-- Python 3.10 이상
-- Redis 서버
-- PDF 및 OCR 처리를 위한 도구들 (tesseract)
+Python 3.11 이상 (로컬 실행 시)
 
----
+Docker 24+ / Docker Compose v2 (권장)
 
-## 📦 2. 시스템 패키지 설치
+Redis 7+
 
-```bash
+Chroma (Vector DB, HTTP 서버)
+
+📦 2. 시스템 패키지 설치 (로컬 실행 시)
 sudo apt update
 sudo apt install -y \
     redis-server \
-```
+    tesseract-ocr \
+    poppler-utils
 
-
-### 🔍 Redis 상태 확인 및 실행
-```bash
+🔍 Redis 상태 확인 및 실행
 sudo systemctl enable redis
 sudo systemctl start redis
 sudo systemctl status redis
-```
 
----
-
-## 🐍 3. Python 가상환경 설정 (권장)
-
-```bash
+🐍 3. Python 가상환경 설정 (권장)
 python3 -m venv .venv
 source .venv/bin/activate
-```
 
----
-
-## 📚 4. Python 패키지 설치
-
-```bash
+📚 4. Python 패키지 설치
 pip install --upgrade pip
 pip install -r requirements.txt
-```
 
----
+⚙️ 5. 환경 변수 설정
+자동 설정 (권장)
+./setup_env.sh
 
-## 🚀 5. 서버 실행
 
-### 🌐 PDF 및 채팅 요약 API 서버 실행
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+실행 시 .env 파일 생성
 
-> 기본적으로 `8000` 포트를 사용하며, 필요 시 설정 변경 가능
+LLM Provider(OpenAI/HuggingFace) 선택
 
----
+OpenAI / Tavily API Key 입력 가능
 
-## 🧪 6. 테스트 및 확인 (실제 테스트 기준 반영)
+수동 설정 (직접 작성)
 
-### ✅ 채팅 요약 API 테스트
-```bash
-curl -X POST http://localhost:8000/chat-summary \
-  -H "Content-Type: application/json" \
-  -d '{
-        "chats": [
-          {
-            "chat_id": "c1",
-            "plaintext": "안녕하세요.",
-            "sender": "user",
-            "timestamp": "2024-07-01T12:00:00"
-          },
-          {
-            "chat_id": "c2",
-            "plaintext": "논문 요약 부탁드려요.",
-            "sender": "user",
-            "timestamp": "2024-07-01T12:01:00"
-          }
-        ]
-      }'
-```
+.env 예시:
+
+CHROMA_HOST=localhost
+CHROMA_PORT=9000
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_TTL_DAYS=7
+LLM_PROVIDER=openai
+EMBEDDING_MODEL_NAME=text-embedding-3-large
+LLM_MODEL_NAME=gpt-3.5-turbo
+OPENAI_API_KEY=sk-xxxx
+TAVILY_API_KEY=tvly-xxxx
+ADMIN_UI_ORIGINS=http://localhost:3000
+
+🚀 6. 서버 실행
+🌐 Docker Compose 실행 (권장)
+docker compose up -d
+
+
+Admin API: http://localhost:8001/docs
+
+Redis: localhost:6379
+
+Chroma: http://localhost:8000
+
+🌐 로컬 직접 실행 (uvicorn)
+./run_admin_api.sh
+
+
+기본 포트는 8001, 로그는 admin_api.log에 기록됩니다.
+
+🧪 7. 테스트 및 확인
+✅ Admin API 상태 확인
+curl http://localhost:8001/vector/statistics
+
+
 응답 예시:
-```json
-{"summary":"User greets and asks for a summary of a paper."}
-```
 
-### ✅ PDF 요약 API 테스트 (요약 결과 캐싱 포함)
-```bash
-curl -X POST http://localhost:8000/summary \
-  -H "Content-Type: application/json" \
-  -d '{
-        "file_id": "paper-01",
-        "pdf_url": "https://arxiv.org/pdf/1706.03762.pdf"
-      }'
-```
-응답 예시:
-```json
-{"file_id":"paper-01","summary":"The paper ...","cached":true}
-```
+{
+  "count": 0,
+  "file_ids": [],
+  "disk_estimate": {
+    "base_path": "./chroma_db",
+    "disk_usage_bytes": 0,
+    "disk_usage_mb": 0.0,
+    "status": "calculated"
+  }
+}
 
-```bash
-curl -X POST http://localhost:8000/summary \
-  -H "Content-Type: application/json" \
-  -d '{
-        "file_id": "paper-02",
-        "pdf_url": "https://www.csun.edu/sites/default/files/pdf_scanned_ocr.pdf"
-      }'
-```
-응답 예시:
-```json
-{"file_id":"paper-02","summary":"CSUN provides free ...","cached":false}
-```
+✅ 캐시 삭제 로그 조회
+curl "http://localhost:8001/cache/deletion-log?date=2025-08-26"
 
----
+✅ 전체 삭제 실행
+curl -X DELETE http://localhost:8001/system/all
 
-## 📎 참고사항
+📎 참고사항
 
-- `redis-server`는 캐시 시스템의 백엔드로 사용됩니다.
+start_services.sh / stop_services.sh는 개발 편의용 스크립트입니다.
+운영 환경에서는 Docker Compose 또는 k8s 환경에서 Redis/Chroma를 관리하는 것을 추천드립니다.
 
----
+Admin API(8001)는 내부 관리자 전용 API입니다.
+외부 노출 시 반드시 인증/방화벽 설정이 필요합니다.
 
-## ✅ 요약 체크리스트
+✅ 요약 체크리스트
 
-- [x] 시스템 패키지 설치 (apt)
-- [x] Python 의존성 설치 (pip)
-- [x] Redis 실행 확인
-- [x] FastAPI 서버 실행
-- [x] 채팅 요약 및 PDF 요약 API 정상 응답 확인
-
+ 1. Redis 실행 확인
+ 2. Chroma 실행 확인
+ 3. .env 생성 완료
+ 4. Python 의존성 설치 / Docker Compose 실행
+ 5. Admin API /docs 정상 접속
+ 6. Vector/Cache API 호출 정상 응답

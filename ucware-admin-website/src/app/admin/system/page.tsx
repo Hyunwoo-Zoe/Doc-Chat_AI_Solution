@@ -1,4 +1,22 @@
+
 // 📁 src/app/admin/system/page.tsx
+// 시스템 데이터 초기화 (Danger Zone) 페이지.
+//
+// 설계 포인트
+// ===========
+// 1) 되돌릴 수 없는 위험한 작업(DB 초기화 등)을 모아놓은 UI.
+// 2) styled-components를 사용해 '위험' 테마에 맞는 시각적 요소(붉은색) 강조.
+// 3) Radix UI의 Alert Dialog를 활용하여 사용자에게 2차 확인을 받음.
+// 4) 각 삭제 기능은 재사용 가능한 `DangerAction` 컴포넌트로 분리.
+// 5) API 요청 핸들러는 `toast.promise`를 사용해 로딩/성공/실패 상태를 사용자에게 명확히 피드백.
+//
+// 의존성
+// -------
+// - @radix-ui/react-alert-dialog: 확인/취소 모달
+// - sonner: 토스트 알림
+// - lucide-react: 아이콘
+// - @/services/adminApi: 실제 API 호출 함수
+
 'use client';
 
 import styled from 'styled-components';
@@ -11,9 +29,9 @@ import {
   deleteSystemAll,
 } from '@/services/adminApi';
 
-/* ------------------------------------------------------------------ */
-/* ───────── styled elements ────────── */
+// ───────────────────────────── 스타일 컴포넌트 ─────────────────────────────
 
+/** 페이지 전체를 감싸는 최상위 래퍼 */
 const Wrapper = styled.main`
   min-height: 100vh;
   display: flex;
@@ -21,6 +39,7 @@ const Wrapper = styled.main`
   padding: 3rem 1rem;
 `;
 
+/** 페이지 콘텐츠를 담는 중앙 패널 */
 const Panel = styled.section`
   width: 100%;
   max-width: 64rem;
@@ -29,6 +48,7 @@ const Panel = styled.section`
   gap: 2rem;
 `;
 
+/** 페이지 상단의 제목과 설명을 담는 헤더 */
 const PageHead = styled.header`
   h2 {
     font-size: 1.75rem;
@@ -43,6 +63,7 @@ const PageHead = styled.header`
   }
 `;
 
+/** 위험 구역 전체를 시각적으로 구분하는 섹션 */
 const DangerZoneSection = styled.section`
   border: 2px solid hsl(var(--destructive) / 0.2);
   border-radius: 1rem;
@@ -50,6 +71,7 @@ const DangerZoneSection = styled.section`
   background: hsl(var(--destructive) / 0.02);
 `;
 
+/** Danger Zone 내부의 헤더 (제목, 설명) */
 const DangerZoneHeader = styled.div`
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
@@ -71,6 +93,7 @@ const DangerZoneHeader = styled.div`
   }
 `;
 
+/** 개별 위험 작업을 나열하는 그리드 레이아웃 */
 const ActionsGrid = styled.div`
   display: grid;
   gap: 1.5rem;
@@ -80,6 +103,7 @@ const ActionsGrid = styled.div`
   }
 `;
 
+/** 각 위험 작업을 나타내는 카드 UI */
 const ActionCard = styled.div`
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -96,6 +120,7 @@ const ActionCard = styled.div`
   }
 `;
 
+/** 작업 카드의 아이콘 래퍼 */
 const ActionIcon = styled.div`
   width: 3rem;
   height: 3rem;
@@ -112,6 +137,7 @@ const ActionIcon = styled.div`
   }
 `;
 
+/** 작업 카드의 제목과 설명을 담는 콘텐츠 영역 */
 const ActionContent = styled.div`
   flex: 1;
   
@@ -128,6 +154,7 @@ const ActionContent = styled.div`
   }
 `;
 
+/** 작업을 트리거하는 버튼 */
 const ActionButton = styled.button`
   width: 100%;
   height: 2.5rem;
@@ -156,7 +183,9 @@ const ActionButton = styled.button`
   }
 `;
 
-// Alert Dialog 스타일
+// ───────────────────────────── Alert Dialog 스타일 ──────────────────────────
+
+/** Radix Alert Dialog의 배경 오버레이 */
 const AlertOverlay = styled(Alert.Overlay)`
   position: fixed;
   inset: 0;
@@ -170,6 +199,7 @@ const AlertOverlay = styled(Alert.Overlay)`
   }
 `;
 
+/** Radix Alert Dialog의 콘텐츠 영역 (모달창) */
 const AlertContent = styled(Alert.Content)`
   position: fixed;
   top: 50%;
@@ -220,6 +250,7 @@ const AlertContent = styled(Alert.Content)`
   }
 `;
 
+/** Alert Dialog 내의 확인/취소 버튼 */
 const DialogBtn = styled.button<{variant?: 'cancel' | 'danger'}>`
   height: 2.5rem;
   padding: 0 1.5rem;
@@ -257,8 +288,7 @@ const DialogBtn = styled.button<{variant?: 'cancel' | 'danger'}>`
   }}
 `;
 
-/* ------------------------------------------------------------------ */
-/* ───────── Components ────────── */
+// ───────────────────────────── 하위 컴포넌트 ─────────────────────────────
 
 interface DangerActionProps {
   icon: React.ReactNode;
@@ -267,6 +297,14 @@ interface DangerActionProps {
   buttonText: string;
   onConfirm: () => void;
 }
+
+/**
+ * DangerAction
+ * 위험한 작업을 수행하는 카드 UI와 확인 모달을 캡슐화한 재사용 컴포넌트.
+ *
+ * @param {DangerActionProps} props - 아이콘, 제목, 설명, 버튼 텍스트, 확인 시 실행할 콜백 함수
+ * @returns {JSX.Element} 위험 작업 카드 UI
+ */
 
 function DangerAction({ icon, title, description, buttonText, onConfirm }: DangerActionProps) {
   return (
@@ -314,6 +352,14 @@ function DangerAction({ icon, title, description, buttonText, onConfirm }: Dange
   );
 }
 
+// ───────────────────────────── 페이지 컴포넌트 ─────────────────────────────
+/**
+ * SystemDangerPage
+ * 시스템의 모든 데이터를 초기화하는 위험 작업을 모아놓은 페이지.
+ *
+ * @returns {JSX.Element} 시스템 초기화 페이지 UI
+ */
+
 export default function SystemDangerPage() {
   const handleAllVectorDelete = () => {
     const promise = deleteAllVectors().then(res => `총 ${res.deleted_count}개의 벡터를 삭제했습니다.`);
@@ -324,6 +370,7 @@ export default function SystemDangerPage() {
     });
   };
 
+  /** 캐시 DB의 모든 데이터를 삭제하는 API를 호출하는 핸들러 */
   const handleAllCacheDelete = () => {
     const promise = deleteAllCache().then(res => `총 ${res.deleted_count}개의 캐시를 삭제했습니다.`);
     toast.promise(promise, {
@@ -333,6 +380,7 @@ export default function SystemDangerPage() {
     });
   };
 
+  /** 시스템의 모든 데이터(벡터, 캐시 등)를 삭제하는 API를 호출하는 핸들러 */
   const handleSystemReset = () => {
     const promise = deleteSystemAll().then(res => `시스템의 모든 데이터를 초기화했습니다.`);
     toast.promise(promise, {
@@ -342,6 +390,7 @@ export default function SystemDangerPage() {
     });
   };
 
+  // ───────────────────────────── 렌더링 로직 ─────────────────────────────
   return (
     <Wrapper>
       <Panel>

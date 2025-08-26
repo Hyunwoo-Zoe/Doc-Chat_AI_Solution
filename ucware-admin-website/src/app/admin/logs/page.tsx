@@ -1,4 +1,20 @@
+
 // 📁 src/app/admin/logs/page.tsx
+// 관리자 UI - 로그 관리 페이지
+//
+// 설계 포인트
+// ===========
+// 1) 날짜 선택 후 요약 요청 로그, 캐시 삭제 로그, 벡터 삭제 로그를 조회.
+// 2) fetchCacheSummaryLog / fetchCacheDeletionLog / fetchVectorDeletionLog 호출.
+// 3) Promise.allSettled으로 병렬 요청, 실패 시 안전하게 빈 배열 처리.
+// 4) 데이터는 최신순으로 정렬 후 상태에 저장.
+// 5) 탭 전환으로 세 가지 로그 종류를 표시.
+//
+// 주의
+// ----
+// - API 응답 데이터는 백엔드 포맷에 의존하므로 타입 지정 필수.
+// - 대규모 데이터 대비를 위해 테이블/리스트는 overflow 처리.
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -15,6 +31,11 @@ import {
 } from '@/services/adminApi'
 
 /* ───── styled elements ───── */
+// Wrapper / Panel / PageHead / Card → 페이지 전체 레이아웃
+// Tabs / TabBtn → 탭 전환 버튼
+// FormLine / Field / Btn → 조회 날짜 입력 및 버튼
+// TableWrap / STable → 요약 로그 테이블
+// LogRow → 캐시/벡터 로그 리스트
 
 const Wrapper = styled.main`
   min-height: 100vh;
@@ -114,16 +135,35 @@ const LogRow = styled.div`
 `
 
 /* ───── helper ───── */
+/**
+ * 오늘 날짜를 YYYY-MM-DD 포맷 문자열로 반환
+ */
 
 const todayStr = () => new Date().toISOString().split('T')[0]
 
 /* ───── types ───── */
-
+// 요약 요청 로그 타입
 type SummaryLog = { file_id:string; query:string; lang:string; timestamp:string }
+
+// 캐시/벡터 삭제 로그 타입 (file_id|timestamp 문자열)
 type DeletionLog = string
 
 /* ───── component ───── */
-
+/**
+ * LogsPage
+ *
+ * State:
+ *   date     : 조회할 날짜
+ *   active   : 현재 탭 (summary | cacheDel | vecDel)
+ *   summary  : 요약 요청 로그
+ *   cacheDel : 캐시 삭제 로그
+ *   vecDel   : 벡터 삭제 로그
+ *   busy     : 로딩 상태
+ *
+ * Functions:
+ *   fetchLogs : 날짜 기준으로 세 가지 로그를 병렬 요청 후 상태 갱신
+ *   DeletionList : 삭제 로그 렌더링 헬퍼
+ */
 export default function LogsPage() {
   const [date, setDate] = useState(todayStr())
   const [active, setActive] = useState<'summary' | 'cacheDel' | 'vecDel'>('summary')
@@ -133,6 +173,7 @@ export default function LogsPage() {
   const [vecDel, setVecDel] = useState<DeletionLog[]>([])
   const [busy, setBusy] = useState(false)
 
+  // ───────── 로그 조회 ─────────
   const fetchLogs = async () => {
     if (!date) {
       toast.warning('날짜를 선택해주세요');
@@ -194,13 +235,14 @@ export default function LogsPage() {
     });
   };
 
-  // 페이지가 처음 로드될 때 로그를 자동으로 불러옵니다.
+  // 페이지 로드 시 자동 조회
   useEffect(() => {
     fetchLogs();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* render helpers */
+  // 삭제 로그 렌더링 (없으면 안내 메시지 출력)
   const DeletionList = ({data}:{data:DeletionLog[]})=>(
     data.length===0
       ? <p className="text-sm text-muted-foreground p-4">해당 날짜의 로그가 없습니다.</p>
@@ -217,6 +259,7 @@ export default function LogsPage() {
         </div>
   )
 
+  // ───────── UI 렌더링 ─────────
   return(
     <Wrapper>
       <Panel>

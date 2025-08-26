@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # stop_services.sh: chroma, uvicorn(FastAPI), redis-server 종료
 
@@ -37,4 +38,6 @@ else
 fi
 
 echo "✅ 모든 서버 종료 완료"
+
+
 

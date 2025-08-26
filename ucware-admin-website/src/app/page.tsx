@@ -1,11 +1,31 @@
-// 📁 src/app/page.tsx (styled-components 변환 최종본)
+
+// 📁 src/app/page.tsx
+// 메인 랜딩 페이지 (Welcome Page).
+//
+// 설계 포인트
+// ===========
+// 1) styled-components 기반 UI 구성 (Tailwind CSS 변수와 혼용).
+// 2) 다크 모드 대비 색상 변수(GlobalStyle) 적용.
+// 3) 메인 CTA 버튼(Sign In / Create Account) 제공.
+// 4) 보안/관리자 전용 접근을 강조하는 Hero Section 디자인.
+// 
+// 주의
+// ----
+// - hsl(var(--...)) 형태의 색상 변수는 globals.css와 통일.
+// - 반응형 레이아웃(@media)로 모바일/데스크탑 대응.
+
 'use client';
 
 import Link from "next/link";
 import { ArrowRight, Shield, Lock } from "lucide-react";
 import styled, { createGlobalStyle } from "styled-components";
 
-// styled-components에서 Tailwind CSS 변수를 사용하기 위한 설정
+// ───────────────────────────── 글로벌 스타일 ─────────────────────────────
+/**
+ * styled-components 전역 스타일 정의
+ * - Tailwind CSS의 전역 변수와 연결
+ * - 기본 색상 팔레트 (라이트/다크)
+ */
 const GlobalStyle = createGlobalStyle`
   :root {
     --background: 0 0% 3.9%;
@@ -15,11 +35,13 @@ const GlobalStyle = createGlobalStyle`
     --muted-foreground: 0 0% 63.9%;
   }
   .dark {
-    /* 다크 모드 변수는 이미 root에 있으므로 추가 설정 불필요 */
+    /* 다크 모드 변수는 이미 root에 정의되어 있으므로 추가 필요 없음 */
   }
 `;
 
+// ───────────────────────────── 주요 레이아웃 컴포넌트 ─────────────────────────────
 const Main = styled.main`
+  /* 전체 화면 중앙 정렬 레이아웃 */
   position: relative;
   display: flex;
   min-height: 100vh;
@@ -31,6 +53,7 @@ const Main = styled.main`
   color: hsl(var(--foreground));
   
   &::before {
+    /* 배경에 은은한 radial-gradient 효과 */
     content: '';
     position: absolute;
     inset: 0;
@@ -40,6 +63,7 @@ const Main = styled.main`
 `;
 
 const ContentWrapper = styled.div`
+  /* 메인 콘텐츠 중앙 배치 */
   position: relative;
   z-index: 10;
   margin: 0 auto;
@@ -48,6 +72,7 @@ const ContentWrapper = styled.div`
   text-align: center;
 `;
 
+// ───────────────────────────── UI 요소 ─────────────────────────────
 const IconWrapper = styled.div`
   margin-bottom: 2rem;
   display: flex;
@@ -78,6 +103,7 @@ const Subtitle = styled.p`
   }
 `;
 
+// ───────────────────────────── 버튼 그룹 ─────────────────────────────
 const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -139,6 +165,17 @@ const FooterText = styled.div`
   color: hsl(var(--muted-foreground));
 `;
 
+// ───────────────────────────── 페이지 컴포넌트 ─────────────────────────────
+/**
+ * WelcomePage
+ * 
+ * Returns:
+ *   Admin Control Center 랜딩 화면
+ *   - Shield 아이콘 Hero
+ *   - 제목/부제목
+ *   - Sign In / Create Account 버튼
+ *   - 하단 보안 안내 텍스트
+ */
 export default function WelcomePage() {
   return (
     <>

@@ -1,4 +1,19 @@
+
 // 📁 src/app/admin/cache/page.tsx
+// 관리자 UI - 캐시 관리 페이지 (1부: 스타일 정의)
+//
+// 설계 포인트
+// ===========
+// 1) styled-components로 페이지 레이아웃/컴포넌트 스타일 정의.
+// 2) Tailwind CSS 변수(hsl(var(--...)))와 혼용.
+// 3) Wrapper → Panel → Card → Row 구조로 UI 계층화.
+// 4) 각 UI 요소는 역할 단위로 컴포넌트 분리.
+//
+// 주의
+// ----
+// - 실제 로직/상태 관리 부분은 2부에서 정의.
+// - 여기서는 스타일 정의와 레이아웃 구조만 포함.
+
 'use client'
 
 import { useState } from 'react'
@@ -30,7 +45,9 @@ import {
 
 /* ------------------------------------------------------------------ */
 /* ───────── styled elements ───────── */
+/* 페이지 전체 레이아웃과 UI 컴포넌트를 정의하는 styled-components */
 
+// 페이지 전체 Wrapper (중앙 정렬, 배경)
 const Wrapper = styled.main`
   min-height: 100vh;
   display: flex;
@@ -39,6 +56,7 @@ const Wrapper = styled.main`
   background: radial-gradient(ellipse at top left, hsl(var(--primary) / 0.05), transparent 50%);
 `
 
+// 내부 콘텐츠 패널 (최대 폭 72rem, column 레이아웃)
 const Panel = styled.section`
   width: 100%;
   max-width: 72rem;
@@ -47,6 +65,7 @@ const Panel = styled.section`
   gap: 2rem;
 `
 
+// 페이지 헤더 (제목/설명, gradient 텍스트 포함)
 const PageHead = styled.header`
   text-align: center;
   margin-bottom: 1rem;
@@ -70,6 +89,7 @@ const PageHead = styled.header`
   }
 `
 
+// 상단 탭 컨테이너 (list/clean/all 전환 버튼)
 const TabsContainer = styled.div`
   display: flex;
   gap: .5rem;
@@ -81,6 +101,7 @@ const TabsContainer = styled.div`
   margin: 0 auto;
 `
 
+// 개별 탭 버튼 (active / danger 상태 지원)
 const TabBtn = styled.button<{$active?:boolean; $danger?:boolean}>`
   padding: .75rem 1.5rem;
   border-radius: .75rem;
@@ -116,6 +137,7 @@ const TabBtn = styled.button<{$active?:boolean; $danger?:boolean}>`
     `}
 `
 
+// 공통 카드 컨테이너 (list, clean, all 공용)
 const Card = styled.div`
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: hsl(var(--card));
@@ -130,16 +152,19 @@ const Card = styled.div`
   }
 `
 
+// 카드 헤더 (섹션 타이틀)
 const CardHeader = styled.div`
   padding: 1.5rem 2rem;
   border-bottom: 1px solid hsl(var(--border));
   background: hsl(var(--muted) / 0.3);
 `
 
+// 카드 콘텐츠 (본문 영역)
 const CardContent = styled.div`
   padding: 2rem;
 `
 
+// 검색 영역 (날짜 입력 + 버튼들)
 const SearchSection = styled.div`
   display: flex;
   gap: 1rem;
@@ -150,6 +175,7 @@ const SearchSection = styled.div`
   }
 `
 
+// 날짜 입력 Wrapper (아이콘 + input 배치)
 const DateInputWrapper = styled.div`
   position: relative;
   flex: 1;
@@ -167,6 +193,7 @@ const DateInputWrapper = styled.div`
   }
 `
 
+// 날짜 입력 input (focus/hover 스타일 포함)
 const DateInput = styled.input`
   width: 100%;
   height: 3rem;
@@ -197,6 +224,7 @@ const DateInput = styled.input`
   }
 `
 
+// 공통 버튼 (variant: primary/secondary/danger, size: sm/md 지원)
 const Btn = styled.button<{variant?: 'primary' | 'secondary' | 'danger'; size?: 'sm' | 'md'}>`
   height: ${({ size }) => size === 'sm' ? '2.25rem' : '3rem'};
   padding: ${({ size }) => size === 'sm' ? '0 0.75rem' : '0 1.5rem'};
@@ -259,11 +287,13 @@ const Btn = styled.button<{variant?: 'primary' | 'secondary' | 'danger'; size?: 
   }
 `
 
+// 캐시 목록 Grid
 const CacheGrid = styled.div`
   display: grid;
   gap: .75rem;
 `
 
+// 캐시 행(Row) 컨테이너 (hover 효과 포함)
 const CacheRow = styled.div<{ $expanded?: boolean }>`
   background: hsl(var(--background));
   border: 2px solid rgba(255, 255, 255, 0.15);
@@ -278,6 +308,7 @@ const CacheRow = styled.div<{ $expanded?: boolean }>`
   }
 `
 
+// 캐시 행(Row) 헤더 (ID + action 버튼들)
 const CacheRowHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -303,6 +334,7 @@ const CacheRowHeader = styled.div`
   }
 `
 
+// 캐시 행(Row) 확장 시 표시되는 메타데이터 영역
 const MetadataPanel = styled.div`
   padding: 1.25rem;
   background: hsl(var(--muted) / 0.3);
@@ -338,6 +370,7 @@ const MetadataPanel = styled.div`
   }
 `
 
+// 캐시 목록 상단 통계 바 (선택 날짜, 캐시 개수 표시)
 const StatsBar = styled.div`
   display: flex;
   align-items: center;
@@ -360,6 +393,7 @@ const StatsBar = styled.div`
   }
 `
 
+// 조회 결과 없을 때/로딩 중일 때 표시되는 상태 UI
 const EmptyState = styled.div`
   text-align: center;
   padding: 4rem 2rem;
@@ -377,6 +411,7 @@ const EmptyState = styled.div`
   }
 `
 
+// 기능 설명 카드 (미사용 정리, 전체 삭제 등 안내/버튼 포함)
 const FeatureCard = styled.div`
   text-align: center;
   padding: 3rem 2rem;
@@ -421,7 +456,8 @@ const FeatureCard = styled.div`
   }
 `
 
-// Alert Dialog 스타일
+// ───────── Alert Dialog (Radix UI) ─────────
+// 전체 삭제/개별 삭제 시 확인 다이얼로그 스타일
 const AlertOverlay = styled(Alert.Overlay)`
   position: fixed;
   inset: 0;
@@ -487,15 +523,30 @@ const AlertContent = styled(Alert.Content)`
 
 /* ------------------------------------------------------------------ */
 /* ───────── util ───────── */
-
+/**
+ * 오늘 날짜를 YYYY-MM-DD 포맷 문자열로 반환
+ * - date input 기본값 및 max 속성에 사용
+ */
 const todayISO = () => new Date().toISOString().split('T')[0]
 
 /* ------------------------------------------------------------------ */
 /* ───────── Component ───────── */
+/**
+ * CachePage
+ *
+ * State:
+ *   tab        : 현재 활성 탭 (list | clean | all)
+ *   date       : 조회 날짜 (기본: 오늘)
+ *   ids        : 조회된 캐시 file_id 리스트
+ *   meta       : 캐시별 메타데이터 캐시
+ *   expandedId : 현재 확장된 캐시 행
+ *   busy       : 조회/작업 중 로딩 상태
+ */
 
 export default function CachePage() {
   type CacheId = string
 
+  // ───────── 상태 정의 ─────────
   const [tab,setTab]           = useState<'list'|'clean'|'all'>('list')
   const [date,setDate]         = useState(todayISO())
   const [ids,setIds]           = useState<CacheId[]>([])
@@ -503,7 +554,8 @@ export default function CachePage() {
   const [expandedId,setExpandedId] = useState<CacheId | null>(null)
   const [busy,setBusy]         = useState(false)
 
-  /* fetch list */
+  // ───────── 이벤트 핸들러 ─────────
+  // 날짜별 캐시 목록 조회
   const load = async () => {
     if(!date) return toast.warning('날짜를 선택하세요.')
     setBusy(true);setIds([]);setMeta({});setExpandedId(null)
@@ -516,6 +568,7 @@ export default function CachePage() {
     finally{ setBusy(false) }
   }
 
+  // 캐시 메타데이터 토글/로드
   const toggleMeta = (id: CacheId) => {
     if (expandedId === id) {
       setExpandedId(null)
@@ -535,6 +588,7 @@ export default function CachePage() {
     }
   }
 
+  // 개별 캐시 삭제
   const delOne = (id:CacheId) =>
     toast.promise(
       deleteCacheById(id).then(()=>{
@@ -545,12 +599,14 @@ export default function CachePage() {
       {loading:'삭제 중…',success:v=>v,error:'삭제 실패'}
     )
 
+  // 미사용 캐시 정리
   const cleanup = () =>
   toast.promise(
     cleanupUnusedCache().then(r=>`미사용 ${r.deleted_count || 0}건 정리`),
     {loading:'정리 중…',success:v=>v,error:'실패'}
   )
 
+  // 전체 캐시 삭제
   const deleteAll = () =>
     toast.promise(
       deleteAllCache().then(r=>{
@@ -560,11 +616,12 @@ export default function CachePage() {
       {loading:'전체 삭제…',success:v=>v,error:'실패'}
     )
 
+  // 캐시 ID 클립보드 복사
   const copyId = (id:CacheId) =>
     navigator.clipboard.writeText(id).then(()=>toast.success('ID가 클립보드에 복사되었습니다'))
 
   /* ------------------------------------------------------------------ */
-
+  // UI 렌더링
   return (
     <Wrapper>
       <Panel>

@@ -1,4 +1,21 @@
+
 // 📁 src/app/admin/vector/page.tsx
+// 벡터 DB (ChromaDB) 관리 페이지.
+//
+// 설계 포인트
+// ===========
+// 1) 탭 UI를 통해 '벡터 조회', '미사용 정리', '전체 삭제' 기능 분리.
+// 2) '벡터 조회' 탭에서는 전체 벡터 목록을 불러오고, File ID로 검색하는 기능 제공.
+// 3) '미사용 정리' 탭에서는 캐시(Redis)에 존재하지 않는 벡터(ChromaDB)를 찾아 삭제.
+// 4) '전체 삭제' 탭에서는 Radix UI Dialog를 이용해 모든 벡터를 삭제하기 전 사용자 확인 절차 강화.
+// 5) 모든 비동기 작업(API 호출)은 `toast.promise`를 사용해 사용자에게 명확한 피드백 제공.
+// 6) 상태(vectors, view)를 분리하여 원본 데이터와 사용자에게 보여지는 데이터를 구분.
+//
+// 주의
+// ----
+// - `cleanup` 함수는 성공/실패/정리할 항목 없음 등 다양한 케이스에 맞춰 토스트 메시지를 다르게 표시함.
+// - `loadWithoutToast` 함수는 `cleanup` 성공 후 UI만 조용히 갱신하기 위해 별도로 구현됨.
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,9 +33,9 @@ import {
 } from '@/services/adminApi';
 import { toast } from 'sonner';
 
-/* ------------------------------------------------------------------ */
-/* ───────── styled elements ───────── */
+// ───────────────────────────── 스타일 컴포넌트 ─────────────────────────────
 
+/** 페이지 전체를 감싸는 최상위 래퍼 */
 const Wrapper = styled.main`
   min-height: 100vh;
   display: flex;
@@ -27,6 +44,7 @@ const Wrapper = styled.main`
   background: radial-gradient(ellipse at top right, hsl(var(--primary) / 0.05), transparent 50%);
 `;
 
+/** 페이지 콘텐츠를 담는 중앙 패널 */
 const Panel = styled.section`
   width: 100%;
   max-width: 72rem;
@@ -35,6 +53,7 @@ const Panel = styled.section`
   gap: 2rem;
 `;
 
+/** 페이지 상단의 제목과 설명을 담는 헤더 */
 const PageHead = styled.header`
   text-align: center;
   margin-bottom: 1rem;
@@ -58,6 +77,7 @@ const PageHead = styled.header`
   }
 `;
 
+/** 기능 탭을 감싸는 컨테이너 */
 const TabsContainer = styled.div`
   display: flex;
   gap: .5rem;
@@ -69,6 +89,7 @@ const TabsContainer = styled.div`
   margin: 0 auto;
 `;
 
+/** 개별 기능 탭 버튼 */
 const TabBtn = styled.button<{$active?: boolean; $danger?: boolean}>`
   padding: .75rem 1.5rem;
   border-radius: .75rem;
@@ -104,6 +125,7 @@ const TabBtn = styled.button<{$active?: boolean; $danger?: boolean}>`
     `}
 `;
 
+/** 각 탭의 콘텐츠를 담는 카드 UI */
 const Card = styled.div`
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: hsl(var(--card));
@@ -118,16 +140,19 @@ const Card = styled.div`
   }
 `;
 
+/** 카드의 헤더 영역 */
 const CardHeader = styled.div`
   padding: 1.5rem 2rem;
   border-bottom: 1px solid hsl(var(--border));
   background: hsl(var(--muted) / 0.3);
 `;
 
+/** 카드의 콘텐츠 영역 */
 const CardContent = styled.div`
   padding: 2rem;
 `;
 
+/** 검색 입력 필드와 버튼을 포함하는 섹션 */
 const SearchSection = styled.div`
   display: flex;
   gap: 1rem;
@@ -138,6 +163,7 @@ const SearchSection = styled.div`
   }
 `;
 
+/** 검색어 입력을 위한 input 요소 */
 const SearchInput = styled.input`
   flex: 1;
   height: 3rem;
@@ -159,6 +185,7 @@ const SearchInput = styled.input`
   }
 `;
 
+/** 검색 아이콘과 input을 함께 배치하기 위한 래퍼 */
 const SearchWrapper = styled.div`
   position: relative;
   flex: 1;
@@ -174,6 +201,7 @@ const SearchWrapper = styled.div`
   }
 `;
 
+/** 공용 버튼 컴포넌트 (variant, size prop으로 스타일 분기) */
 const Btn = styled.button<{variant?: 'primary' | 'secondary' | 'danger'; size?: 'sm' | 'md'}>`
   height: ${({ size }) => size === 'sm' ? '2.25rem' : '3rem'};
   padding: ${({ size }) => size === 'sm' ? '0 0.75rem' : '0 1.5rem'};
@@ -236,11 +264,13 @@ const Btn = styled.button<{variant?: 'primary' | 'secondary' | 'danger'; size?: 
   }
 `;
 
+/** 벡터 목록을 표시하는 그리드 */
 const VectorGrid = styled.div`
   display: grid;
   gap: .75rem;
 `;
 
+/** 개별 벡터 ID와 액션 버튼을 담는 행 */
 const VectorRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -273,6 +303,7 @@ const VectorRow = styled.div`
   }
 `;
 
+/** 데이터가 없을 때 표시되는 플레이스홀더 */
 const EmptyState = styled.div`
   text-align: center;
   padding: 4rem 2rem;
@@ -290,6 +321,7 @@ const EmptyState = styled.div`
   }
 `;
 
+/** 전체/검색된 벡터 개수를 표시하는 통계 바 */
 const StatsBar = styled.div`
   display: flex;
   align-items: center;
@@ -312,6 +344,7 @@ const StatsBar = styled.div`
   }
 `;
 
+/** '미사용 정리', '전체 삭제' 탭에서 기능을 설명하는 카드 */
 const FeatureCard = styled.div`
   text-align: center;
   padding: 3rem 2rem;
@@ -356,7 +389,9 @@ const FeatureCard = styled.div`
   }
 `;
 
-// Alert Dialog 스타일
+// ──────────────────────── Alert Dialog 스타일 ────────────────────────
+
+/** Radix Alert Dialog의 배경 오버레이 */
 const AlertOverlay = styled(Alert.Overlay)`
   position: fixed;
   inset: 0;
@@ -370,6 +405,7 @@ const AlertOverlay = styled(Alert.Overlay)`
   }
 `;
 
+/** Radix Alert Dialog의 콘텐츠 영역 (모달창) */
 const AlertContent = styled(Alert.Content)`
   position: fixed;
   top: 50%;
@@ -420,18 +456,31 @@ const AlertContent = styled(Alert.Content)`
   }
 `;
 
-/* ------------------------------------------------------------------ */
-
+// ───────────────────────────── 페이지 컴포넌트 ─────────────────────────────
+/**
+ * VectorPage
+ * ChromaDB의 벡터 데이터를 관리(조회, 삭제, 최적화)하는 페이지 컴포넌트.
+ *
+ * @returns {JSX.Element} 탭 기반의 벡터 관리 UI.
+ */
 export default function VectorPage() {
   type Vec = { id: string };
 
-  const [tab,     setTab]   = useState<'list'|'clean'|'all'>('list');
-  const [vectors, setVec]   = useState<Vec[]>([]);
-  const [view,    setView]  = useState<Vec[]>([]);
-  const [term,    setTerm]  = useState('');
-  const [busy,    setBusy]  = useState(false);
+  // ───────────────────────────── 상태 관리 ─────────────────────────────
+  /** @type {'list'|'clean'|'all'} tab - 현재 활성화된 탭 상태 */
+  const [tab, setTab] = useState<'list'|'clean'|'all'>('list');
+  /** @type {Vec[]} vectors - 서버에서 가져온 전체 벡터 목록 원본 */
+  const [vectors, setVec] = useState<Vec[]>([]);
+  /** @type {Vec[]} view - 사용자에게 보여지는 필터링된 벡터 목록 */
+  const [view, setView] = useState<Vec[]>([]);
+  /** @type {string} term - 검색어 입력 상태 */
+  const [term, setTerm] = useState('');
+  /** @type {boolean} busy - API 요청 진행 중 여부 (전역 로딩 상태) */
+  const [busy, setBusy] = useState(false);
 
-  /* ───── fetch list ───── */
+  // ───────────────────────────── 데이터 로딩 및 API 핸들러 ─────────────────────────────
+  
+  /** 서버에서 전체 벡터 목록을 가져와 상태를 업데이트하는 함수 */
   const load = async () => {
     setBusy(true);
     try {
