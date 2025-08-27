@@ -1,20 +1,19 @@
-
 # UCWARE Admin API - 설치 및 운영 가이드
 
-## 📌 프로젝트 개요
+## 프로젝트 개요
 
 UCWARE Admin API는 **관리자 전용 벡터·캐시 관리 서버**입니다. Chroma(Vector DB)와 Redis(Cache)를 직접 제어하여, 웹 UI(Next.js)와 연동해 리소스 점검·정리·로그 조회 기능을 제공합니다.
 
-### 🌟 주요 특징
-- **📊 Vector 관리**: 통계 조회, 존재 확인, 날짜별 조회, 미사용 정리, 개별/전체 삭제, 삭제 로그 관리
-- **🧠 Cache 관리**: 요약본 조회, 메타데이터 조회, TTL 정리, 삭제 로그, 요약 요청 로그 관리
-- **🧹 시스템 관리**: Vector + Cache 전체 데이터 삭제
-- **🕓 자동 정리 스케줄러**: 매일 새벽 3시에 Redis 기준으로 미사용 벡터 자동 삭제
-- **🛡 내부 전용 API**: 인증/방화벽 설정을 통해 관리자만 접근 가능하도록 설계
+### 주요 특징
+- **Vector 관리**: 통계 조회, 존재 확인, 날짜별 조회, 미사용 정리, 개별/전체 삭제, 삭제 로그 관리
+- **Cache 관리**: 요약본 조회, 메타데이터 조회, TTL 정리, 삭제 로그, 요약 요청 로그 관리
+- **시스템 관리**: Vector + Cache 전체 데이터 삭제
+- **자동 정리 스케줄러**: 매일 새벽 3시에 Redis 기준으로 미사용 벡터 자동 삭제
+- **내부 전용 API**: 인증/방화벽 설정을 통해 관리자만 접근 가능하도록 설계
 
 ---
 
-## 🏗️ 아키텍처 개요
+## 아키텍처 개요
 
 ```
 [Admin UI] → [Admin API (FastAPI:8001)]
@@ -27,9 +26,9 @@ UCWARE Admin API는 **관리자 전용 벡터·캐시 관리 서버**입니다. 
 
 ---
 
-## 🛠️ 설치 가이드
+## 설치 가이드
 
-### 📌 1. 시스템 요구 사항
+### 1. 시스템 요구 사항
 
 - Ubuntu 20.04+ 또는 호환 리눅스 배포판
 - Python 3.11 이상 (로컬 실행 시)
@@ -37,7 +36,7 @@ UCWARE Admin API는 **관리자 전용 벡터·캐시 관리 서버**입니다. 
 - Redis 7+
 - Chroma (Vector DB, HTTP 서버)
 
-### 📦 2. 시스템 패키지 설치 (로컬 실행 시)
+### 2. 시스템 패키지 설치 (로컬 실행 시)
 
 ```bash
 sudo apt update
@@ -54,21 +53,21 @@ sudo systemctl start redis
 sudo systemctl status redis
 ```
 
-### 🐍 3. Python 가상환경 설정 (권장)
+### 3. Python 가상환경 설정 (권장)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 📚 4. Python 패키지 설치
+### 4. Python 패키지 설치
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### ⚙️ 5. 환경 변수 설정
+### 5. 환경 변수 설정
 
 #### 자동 설정 (권장)
 ```bash
@@ -97,7 +96,7 @@ ADMIN_UI_ORIGINS=http://localhost:3000
 
 ---
 
-## 🚀 빠른 시작
+## 빠른 시작
 
 ### 1. 저장소 클론
 ```bash
@@ -112,7 +111,7 @@ cd ucware-admin-api
 
 ### 3. 실행 방법
 
-#### 🌐 Docker Compose 실행 (권장)
+#### Docker Compose 실행 (권장)
 ```bash
 docker compose up -d
 ```
@@ -120,7 +119,7 @@ docker compose up -d
 - Redis → localhost:6379
 - Chroma → http://localhost:8000
 
-#### 🌐 로컬 직접 실행
+#### 로컬 직접 실행
 ```bash
 ./run_admin_api.sh
 ```
@@ -129,9 +128,9 @@ docker compose up -d
 
 ---
 
-## 🧪 기능 확인
+## 기능 확인
 
-### ✅ 벡터 통계 조회
+### 벡터 통계 조회
 ```bash
 curl http://localhost:8001/vector/statistics
 ```
@@ -150,19 +149,19 @@ curl http://localhost:8001/vector/statistics
 }
 ```
 
-### ✅ 캐시 삭제 로그 조회
+### 캐시 삭제 로그 조회
 ```bash
 curl "http://localhost:8001/cache/deletion-log?date=2025-08-26"
 ```
 
-### ✅ 전체 데이터 삭제
+### 전체 데이터 삭제
 ```bash
 curl -X DELETE http://localhost:8001/system/all
 ```
 
 ---
 
-## 📋 API 엔드포인트 목록
+## API 엔드포인트 목록
 
 ### Vector 관리
 - `GET /vector/statistics` - 전체 벡터 통계 조회
@@ -185,7 +184,7 @@ curl -X DELETE http://localhost:8001/system/all
 
 ---
 
-## 📎 참고사항
+## 참고사항
 
 - `start_services.sh` / `stop_services.sh`는 개발 편의용 스크립트입니다.
   - 운영 환경에서는 Docker Compose 또는 k8s 환경에서 Redis/Chroma를 관리하는 것을 추천드립니다.
@@ -195,7 +194,7 @@ curl -X DELETE http://localhost:8001/system/all
 
 ---
 
-## ✅ 체크리스트
+## 체크리스트
 
 - [ ] Redis 실행 확인
 - [ ] Chroma 실행 확인  
@@ -206,7 +205,7 @@ curl -X DELETE http://localhost:8001/system/all
 
 ---
 
-## 🤝 인수인계 시 확인사항
+## 인수인계 시 확인사항
 
 ### 필수 확인
 1. `.env` 파일 생성 및 API 키 설정

@@ -1,7 +1,7 @@
 
 # UCWARE Admin API - 프로젝트 이관 문서
 
-## 📌 프로젝트 개요
+## 프로젝트 개요
 
 UCWARE Admin API는 **관리자 전용 벡터 및 캐시 관리 서버**입니다. PDF 요약 서비스의 Vector DB(Chroma)와 Cache(Redis)를 효율적으로 관리하기 위해 개발되었습니다.
 
@@ -13,7 +13,7 @@ UCWARE Admin API는 **관리자 전용 벡터 및 캐시 관리 서버**입니�
 
 ---
 
-## 🏗️ 시스템 아키텍처
+## 시스템 아키텍처
 
 ```
 ┌─────────────────┐
@@ -44,7 +44,7 @@ UCWARE Admin API는 **관리자 전용 벡터 및 캐시 관리 서버**입니�
 
 ---
 
-## 🚀 설치 및 실행 가이드
+## 설치 및 실행 가이드
 
 ### 1. 사전 요구사항
 - Docker & Docker Compose
@@ -89,7 +89,7 @@ CHROMA_PORT=9000
 
 ### 4. 실행 방법
 
-#### 🐳 Docker Compose 실행 (권장)
+#### Docker Compose 실행 (권장)
 ```bash
 # 전체 서비스 실행
 docker compose up -d
@@ -101,7 +101,7 @@ docker compose logs -f admin-api
 docker compose down
 ```
 
-#### 💻 로컬 개발 환경
+#### 로컬 개발 환경
 ```bash
 # Redis와 Chroma 먼저 실행
 ./start_services.sh
@@ -118,7 +118,7 @@ docker compose down
 
 ---
 
-## 📋 주요 API 엔드포인트
+## 주요 API 엔드포인트
 
 ### Vector 관리 API
 
@@ -150,7 +150,7 @@ docker compose down
 
 ---
 
-## 🔧 주요 기능 상세
+## 주요 기능 상세
 
 ### 1. 자동 정리 스케줄러
 - **실행 시간**: 매일 새벽 3시
@@ -182,7 +182,7 @@ pdf_vectors                    # PDF 문서 벡터 저장
 
 ---
 
-## 🧪 기능 테스트
+## 기능 테스트
 
 ### 기본 동작 확인
 ```bash
@@ -198,7 +198,7 @@ curl -X DELETE http://localhost:8001/vector/unused
 
 ---
 
-## ⚠️ 주의사항
+## 주의사항
 
 ### 보안
 1. **Admin API는 내부 네트워크에서만 접근 가능하도록 설정**
@@ -217,7 +217,7 @@ curl -X DELETE http://localhost:8001/vector/unused
 
 ---
 
-## 📁 프로젝트 구조
+## 프로젝트 구조
 
 ```
 ucware-admin-api/
@@ -235,7 +235,7 @@ ucware-admin-api/
 
 ---
 
-## 🤝 인수인계 체크리스트
+## 인수인계 체크리스트
 
 ### 필수 확인 사항
 - [ ] `.env` 파일 생성 및 API 키 설정
@@ -252,7 +252,7 @@ ucware-admin-api/
 
 ---
 
-## 📞 문의사항
+## 문의사항
 
 프로젝트 관련 문의사항이 있으시면 다음 내용과 함께 연락 부탁드립니다:
 - 에러 로그 (`docker compose logs admin-api`)
